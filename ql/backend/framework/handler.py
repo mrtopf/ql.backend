@@ -98,10 +98,10 @@ class RESTfulHandler(Handler):
             ct=""
         if ct.startswith("application/json"):
             d = simplejson.loads(self.request.data)
-            at = d.get("oauth_token", None)
+            at = d.get("access_token", None)
         else:
             # TODO: Split GET and POST!
-            at = self.request.values.get("oauth_token", None)
+            at = self.request.values.get("access_token", None)
         if at is None:
             self.session = None
         else:

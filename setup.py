@@ -29,7 +29,10 @@ setup(name='ql.backend',
           'werkzeug',
           # -*- Extra requirements: -*-
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
-      )
+      entry_points={
+        'paste.app_factory': [
+            'main=ql.backend.main:app_factory',
+        ],
+      }
+    )                                                                                                                                                                         
+
