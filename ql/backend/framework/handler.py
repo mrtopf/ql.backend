@@ -107,6 +107,7 @@ class RESTfulHandler(Handler):
         else:
             am = self.settings.authmanager
             self.session = am.get(at)
+        self.kw = kw
 
     def handle(self, **m):
         """handle a single request. This means checking the method to use, looking up
