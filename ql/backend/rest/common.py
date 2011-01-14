@@ -1,4 +1,4 @@
-from quantumlounge.framework import RESTfulHandler, json, html, role, jsonp
+from quantumlounge.framework import RESTfulHandler, json, html, role
 import werkzeug
 import datetime
 import pymongo.code
@@ -62,7 +62,6 @@ class Query(ExtendedMethodAdapter):
         import registry # here because of loops
         now = datetime.datetime.now()
         t = self.request.args.get("type","status").split(",") # types
-        fmt = self.request.args.get("fmt","html") # which repr you want
         recursive = self.request.args.get("recursive","false").lower() == "true"
         s = """
             (this.publication_date < new Date() || !this.publication_date) &&
@@ -77,9 +76,7 @@ class Query(ExtendedMethodAdapter):
             query['_ancestors'] = self.item._id
         else:
             query['_parent_id'] = self.item._id
-        res = self._query_objs(query) # list of dictionaries
-        out = registry.fmt_registry[fmt](res)()
-        return out
+        return self._query_objs(query) # list of dictionaries
 
 class Parents(ExtendedMethodAdapter):
     """all recursively all nodes in the subtree of this object"""
@@ -112,4 +109,46 @@ class Default(ExtendedMethodAdapter):
     @role("admin")
     def get(self, **kw):
         return self.item.json
+
+class Post(ExtendedMethodAdapter):
+    """create new resources"""
+
+    @json(content_type="application/json")
+    @role("admin")
+    def post(self, **kw):
+        """create the new item"""
+        d = simplejson.loads(self.request.data)
+        d['_parent_id'] = content_id
+        _type = d['_type']
+        ct = self.settings['content1'][_type]
+        for field in ct.required_fields:
+            if field not in d.keys():
+                return self.error(400, "required field '%s' missing" %field)
+
+        # check if _cid already exists in parent node
+        # but only if a _cid is posted 
+        if d.has_key("_cid"):
+            cids = ct.mgr.collection.find({ 
+                    '_cid' : d['_cid'],
+                    '_parent_id' : content_id
+                }).count()
+            if cids>0:
+                return self.error(400, "cid already exists")
+
+        # check if subtype is allowed
+        content = ct.mgr.get(content_id)
+        if content._subtypes is not None:
+            if d['_type'] not in content._subtypes:
+                return self.error(400, "subtype not allowed")
+       
+        # create a new tweet and store it
+        r = {}
+        for a,v in d.items():
+            r[str(a)]=v
+        item = ct.cls(**r)
+        item.oid = unicode(uuid.uuid4())
+        i = ct.mgr.put(item)
+        item = ct.mgr[i]
+        # post the new item back
+        return item.json
 
