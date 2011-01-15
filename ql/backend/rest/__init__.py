@@ -1,5 +1,4 @@
 import api
-import templates
 
 def setup_handlers(map):
     """setup the handlers"""
