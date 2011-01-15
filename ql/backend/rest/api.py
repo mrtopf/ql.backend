@@ -4,8 +4,6 @@ import werkzeug
 import simplejson
 import uuid
 
-import registry
-
 class Method(RESTfulHandler):
     """call a method
     """
@@ -18,7 +16,8 @@ class Method(RESTfulHandler):
         rest_method = m.get('method','default')
         content_id = m['content_id']
         handler = m['handler']
-        del m['method']
+        if m.has_key('method'):
+            del m['method']
         del m['content_id']
         del m['handler']
 
@@ -28,7 +27,7 @@ class Method(RESTfulHandler):
 
         # retrieve the adapter for this object
         _type = item._type
-        methods = registry.type_registry.get(_type, {})
+        methods = self.settings.representations.get(_type, {})
         adapter = methods.get(rest_method, None)(item, **self.kw)
         if adapter is None:
             return werkzeug.exceptions.NotFound()
