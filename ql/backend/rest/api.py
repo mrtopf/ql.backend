@@ -30,13 +30,14 @@ class Method(RESTfulHandler):
         # retrieve the adapter for this object
         _type = item._type
         methods = self.settings.representations.get(_type, {})
-        adapter = methods.get(rest_method, None)(item, **self.kw)
+        adapter = methods.get(rest_method, None)
         if adapter is None:
             return werkzeug.exceptions.NotFound()
+        adapter_instance = adapter(item, **self.kw)
         self.settings.log.debug("found adapter %s" %adapter)
 
         if hasattr(adapter, http_method):
             self.settings.log.debug("calling HTTP method %s and REST method %s on adapter '%s' " %(http_method, rest_method, adapter))
-            return getattr(adapter, http_method)(**m)
+            return getattr(adapter_instance, http_method)(**m)
         return werkzeug.exceptions.MethodNotAllowed()
 
