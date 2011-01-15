@@ -1,4 +1,4 @@
-from quantumlounge.framework import RESTfulHandler, json, html, role
+from ql.backend.framework import RESTfulHandler, json, html, role
 import werkzeug
 import datetime
 import pymongo.code
@@ -59,7 +59,6 @@ class Query(ExtendedMethodAdapter):
 
     @json()
     def get(self, **kw):
-        import registry # here because of loops
         now = datetime.datetime.now()
         t = self.request.args.get("type","status").split(",") # types
         recursive = self.request.args.get("recursive","false").lower() == "true"
