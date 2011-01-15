@@ -1,7 +1,12 @@
-from ql.backend.framework import RESTfulHandler, json, html, role
+from ql.backend.framework import RESTfulHandler, html, role
+from ql.backend.framework import json as jsonify
+from ql.backend.framework.exceptions import BadRequest
 import werkzeug
 import datetime
 import pymongo.code
+import json
+import urlparse
+import uuid
 
 class MethodAdapter(RESTfulHandler):
     """an adapter for using methods"""
@@ -15,8 +20,18 @@ class ExtendedMethodAdapter(MethodAdapter):
     """extends the ``MethodAdapter`` with some useful
     methods such as a method for querying objects"""
 
-    def error(self, msg):
-        return { 'error' : msg }
+    def error(self, code, msg=None):
+        """return an error. The code is the oauth error code to use
+        and an optional message is being logged.
+
+        TODO: return this with a 400 code and not 200!
+        """
+
+        if msg is not None:
+            self.settings.log.debug("error: %s" %code)
+        else:
+            self.settings.log.debug("error: %s (%s)" %(code,msg))
+        raise BadRequest( { 'error' : code })
 
     def _query_objs(self, query):
         """perform the query using the sort order etc. passed in to the 
@@ -45,7 +60,7 @@ class ExtendedMethodAdapter(MethodAdapter):
 class SubTree(ExtendedMethodAdapter):
     """all recursively all nodes in the subtree of this object"""
 
-    @json(content_type="application/json")
+    @jsonify(content_type="application/json")
     @role("admin")
     def get(self, **kw):
         query = {
@@ -57,7 +72,7 @@ class Query(ExtendedMethodAdapter):
     """return a JSON structure of the most recent item of the given
     type which is passed in as ``jsview_type`` in the request"""
 
-    @json()
+    @jsonify()
     def get(self, **kw):
         now = datetime.datetime.now()
         t = self.request.args.get("type","status").split(",") # types
@@ -80,7 +95,7 @@ class Query(ExtendedMethodAdapter):
 class Parents(ExtendedMethodAdapter):
     """all recursively all nodes in the subtree of this object"""
 
-    @json(content_type="application/json")
+    @jsonify(content_type="application/json")
     @role("admin")
     def get(self, **kw):
         ct = self.settings.contentmanager
@@ -93,7 +108,7 @@ class Parents(ExtendedMethodAdapter):
 class Children(ExtendedMethodAdapter):
     """return all direct children of this object"""
 
-    @json(content_type="application/json")
+    @jsonify(content_type="application/json")
     @role("admin")
     def get(self, **kw):
         query = {
@@ -104,7 +119,7 @@ class Children(ExtendedMethodAdapter):
 class Default(ExtendedMethodAdapter):
     """return the default representation meaning the actual payload"""
 
-    @json(content_type="application/json")
+    @jsonify(content_type="application/json")
     @role("admin")
     def get(self, **kw):
         return self.item.json
@@ -112,17 +127,24 @@ class Default(ExtendedMethodAdapter):
 class Post(ExtendedMethodAdapter):
     """create new resources"""
 
-    @json(content_type="application/json")
+    @jsonify(content_type="application/json")
     @role("admin")
     def post(self, **kw):
         """create the new item"""
-        d = simplejson.loads(self.request.data)
+        content_id = self.item._id
+        # data can be either url-encoded or JSON
+        if self.request.content_type=="application/x-www-form-urlencoded":
+            d = self.request.form.to_dict()
+        elif self.request.content_type=="applicaton/json":
+            d = json.loads(self.request.data)
+        else:
+            return self.error("unknown content type")
         d['_parent_id'] = content_id
         _type = d['_type']
         ct = self.settings['content1'][_type]
         for field in ct.required_fields:
             if field not in d.keys():
-                return self.error(400, "required field '%s' missing" %field)
+                return self.error("required field '%s' missing" %field)
 
         # check if _cid already exists in parent node
         # but only if a _cid is posted 
@@ -132,13 +154,13 @@ class Post(ExtendedMethodAdapter):
                     '_parent_id' : content_id
                 }).count()
             if cids>0:
-                return self.error(400, "cid already exists")
+                return self.error("cid already exists")
 
         # check if subtype is allowed
         content = ct.mgr.get(content_id)
         if content._subtypes is not None:
             if d['_type'] not in content._subtypes:
-                return self.error(400, "subtype not allowed")
+                return self.error("subtype not allowed")
        
         # create a new tweet and store it
         r = {}
