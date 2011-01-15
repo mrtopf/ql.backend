@@ -77,3 +77,24 @@ class Server(object):
         return result
         
 
+    def post(self, path, data={}):
+        """POST to a resource using the access token"""
+        values = {'access_token' : self.access_token}
+        values.update(data)
+        data = urllib.urlencode(values)
+        if path.startswith("/"):
+            path = path[1:]
+        url = urlparse.urljoin(self.baseurl,path)+"?"+data
+        req = urllib2.Request(url, data)
+        try:
+            response = urllib2.urlopen(req)
+        except urllib2.HTTPError, e:
+            raise ClientError(str(e))
+        result = response.read()
+        if response.headers['Content-Type']=="application/json":
+            result = json.loads(result)
+        if response.code!=200:
+            raise ClientError(str(result))
+        return result
+        
+
