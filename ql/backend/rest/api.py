@@ -14,6 +14,8 @@ class Method(RESTfulHandler):
         http_method = self.request.method.lower()
 
         rest_method = m.get('method','default')
+        if http_method == "post": 
+            rest_method = "post"
         content_id = m['content_id']
         handler = m['handler']
         if m.has_key('method'):
