@@ -67,8 +67,8 @@ class Server(object):
         url = urlparse.urljoin(self.baseurl,path)+"?"+data
         try:
             response = urllib2.urlopen(url)
-        except urllib2.HTTPError:
-            raise ClientError()
+        except urllib2.HTTPError, e:
+            raise ClientError(str(e))
         result = response.read()
         if response.headers['Content-Type']=="application/json":
             result = json.loads(result)
