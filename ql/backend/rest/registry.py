@@ -27,4 +27,4 @@ representations = {
     'folder' : r_common,
 }
 
-__all__ = ['representations']
+__all__ = ['representations', 'r_common']
