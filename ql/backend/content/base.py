@@ -312,20 +312,14 @@ class ContentManager(object):
     def find(self, query={}, 
                    sort_on=None, 
                    sort_order=pymongo.ASCENDING,
-                   limit=10,                                                                                                                   
-                   offset=0):
-        """return some entries based on the query"""
-    def find(self, query={}, 
-                   sort_on=None, 
-                   sort_order=pymongo.ASCENDING,
                    limit=10,
                    offset=0):
         """return some entries based on the query"""
         if sort_on is not None:
             results = self.collection.find(query, 
-                    limit=limit, 
                     skip=offset,
-                    sort = (sort_on, sort_order)
+                    limit=limit, 
+                    sort = [(sort_on, sort_order)]
                     )
         else:
             results = self.collection.find(query, limit=limit, skip=offset)
