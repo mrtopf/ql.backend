@@ -7,6 +7,11 @@ import types
 import dateutil
 import processors
 
+SORT_ORDERS = {
+    "down" : pymongo.DESCENDING,
+    "up" : pymongo.ASCENDING,
+}
+
 class Model(object):
     """a data model based on quantumcore.storages but copied here to make
     it more flexible. We provide the following features:
@@ -311,11 +316,12 @@ class ContentManager(object):
 
     def find(self, query={}, 
                    sort_on=None, 
-                   sort_order=pymongo.ASCENDING,
+                   sort_order="down",
                    limit=10,
                    offset=0):
         """return some entries based on the query"""
         if sort_on is not None:
+            sort_order = SORT_ORDERS.get(sort_order,pymongo.ASCENDING)
             results = self.collection.find(query, 
                     skip=offset,
                     limit=limit, 
