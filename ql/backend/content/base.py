@@ -299,7 +299,7 @@ class ContentManager(object):
         self.content_types = content_types
         self.root_node = root_node
 
-    def index(self, sort_order="up", **kwargs):
+    def index2(self, sort_order="up", **kwargs):
         """return a list of items""" 
         if sort_order == "up":
             sort_order = pymongo.ASCENDING
@@ -335,6 +335,13 @@ class ContentManager(object):
         for item in results:
             objs.append(self._to_obj(item))
         return objs
+
+    def count(self, query):
+        """return the amount of items for this query"""
+        return self.collection.find(query).count()
+
+    # TODO: Add deprecation
+    index = find
 
     def get(self, oid):
         """return the object with the given object id"""

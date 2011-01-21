@@ -46,6 +46,8 @@ class ExtendedMethodAdapter(MethodAdapter):
             o = int(self.request.values.get("o","0")) #offset
         except:
             return self.error("wrong value for 'o'")
+
+        count = self.settings.contentmanager.count(query)
     
         items = self.settings.contentmanager.index(
             query = query,
@@ -55,7 +57,7 @@ class ExtendedMethodAdapter(MethodAdapter):
             offset = o
         )
         items = [i.json for i in items]
-        return items
+        return {'items': items, 'count': count}
 
 class SubTree(ExtendedMethodAdapter):
     """all recursively all nodes in the subtree of this object"""
