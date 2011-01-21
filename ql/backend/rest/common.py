@@ -36,6 +36,7 @@ class ExtendedMethodAdapter(MethodAdapter):
     def _query_objs(self, query):
         """perform the query using the sort order etc. passed in to the 
         request and return a list of JSON formatted objects"""
+        view = self.request.values.get("view", "default")
         so = self.request.values.get("so","date") # sort order
         sd = self.request.values.get("sd","down") # sort direction
         try:
@@ -56,7 +57,12 @@ class ExtendedMethodAdapter(MethodAdapter):
             limit = l,
             offset = o
         )
-        items = [i.json for i in items]
+        # retrieve the view adapter
+        view_class = self.settings.views.get(view, None)
+        if view_class is None:
+            return self.error("view does not exist")
+        va = view_class(self)
+        items = [va(i) for i in items]
         return {'items': items, 'count': count}
 
 class SubTree(ExtendedMethodAdapter):
@@ -119,7 +125,8 @@ class Children(ExtendedMethodAdapter):
         return self._query_objs(query)
 
 class Default(ExtendedMethodAdapter):
-    """return the default representation meaning the actual payload"""
+    """return the default representation meaning the actual payload. This
+    can be seen a a query for a single object"""
 
     @jsonify(content_type="application/json")
     @role("admin")

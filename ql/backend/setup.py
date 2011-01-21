@@ -42,6 +42,7 @@ def setup(**kw):
     # is if we still want to keep python API and RESTful API seperate and this
     # is more a RESTful thing
     settings.representations = rest.registry.representations
+    settings.views = rest.registry.views
     
     # the base path under which this application runs, usually on root
     # example: "/myapi"

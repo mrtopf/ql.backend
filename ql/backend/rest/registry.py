@@ -1,4 +1,5 @@
 import common
+import views
 
 """
 
@@ -27,4 +28,9 @@ representations = {
     'folder' : r_common,
 }
 
-__all__ = ['representations', 'r_common']
+# the view registry (common over all types for now)
+views = {
+    'default' : views.View
+}
+
+__all__ = ['representations', 'r_common', 'views']
