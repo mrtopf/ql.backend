@@ -3,6 +3,7 @@ from quantumlounge.framework.decorators import html
 
 import setup
 import rest
+import files
 
 class App(Application):
 
@@ -10,6 +11,9 @@ class App(Application):
         """setup the mapper"""
         with map.submapper(path_prefix=self.settings.virtual_path) as m:
             rest.setup_handlers(m)
+            with m.submapper(path_prefix="/1/files") as m:
+                m.connect(None, '/{filename}', handler=files.File)
+                rest.setup_handlers(m)
     
 def main():
     port = 9992
