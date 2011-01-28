@@ -13,7 +13,6 @@ class App(Application):
             rest.setup_handlers(m)
             with m.submapper(path_prefix="/1/files") as m:
                 m.connect(None, '/{filename}', handler=files.File)
-                rest.setup_handlers(m)
     
 def main():
     port = 9992
